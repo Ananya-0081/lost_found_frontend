@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -26,15 +26,19 @@ function Dashboard() {
 
   const userId = token ? JSON.parse(atob(token.split(".")[1])).id : null;
 
-  const getItems = async () => {
+  // 🔥 FIXED with useCallback (no warning)
+  const getItems = useCallback(async () => {
     const res = await axios.get(`${API}/api/items`);
     setItems(res.data);
-  };
+  }, [API]);
 
   useEffect(() => {
-    if (!token) navigate("/");
+    if (!token) {
+      navigate("/");
+      return;
+    }
     getItems();
-  }, []);
+  }, [token, navigate, getItems]);
 
   const saveItem = async () => {
     if (editId) {
@@ -136,6 +140,7 @@ function Dashboard() {
         <h3>All Items</h3>
 
         <div className="table-container">
+
           {/* FILTERS */}
           <div className="table-controls">
             <input
@@ -165,6 +170,7 @@ function Dashboard() {
             <thead>
               <tr>
                 <th>Item</th>
+                <th>Description</th> {/* ✅ FIXED */}
                 <th>Type</th>
                 <th>Location</th>
                 <th>Date</th>
@@ -177,6 +183,8 @@ function Dashboard() {
               {filteredItems.map(item => (
                 <tr key={item._id}>
                   <td>{item.itemName}</td>
+
+                  <td>{item.description}</td> {/* ✅ FIXED */}
 
                   <td className={item.type === "Lost" ? "lost" : "found"}>
                     {item.type}
@@ -209,8 +217,8 @@ function Dashboard() {
               ))}
             </tbody>
           </table>
-        </div>
 
+        </div>
       </div>
     </div>
   );
